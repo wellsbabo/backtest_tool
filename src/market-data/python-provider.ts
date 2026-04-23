@@ -1,4 +1,5 @@
 import {spawn} from "node:child_process";
+import fs from "node:fs";
 import type {DateString} from "../domain/types.js";
 import {z} from "zod";
 import type {MarketDataProvider, MarketDataRequest, MarketDataResponse} from "./types.js";
@@ -30,7 +31,7 @@ export class PythonMarketDataProvider implements MarketDataProvider {
   private readonly scriptPath: string;
 
   constructor(options: PythonMarketDataProviderOptions = {}) {
-    this.pythonCommand = options.pythonCommand ?? "python";
+    this.pythonCommand = options.pythonCommand ?? resolveDefaultPythonCommand();
     this.scriptPath = options.scriptPath ?? "scripts/fetch_market_data.py";
   }
 
@@ -85,4 +86,8 @@ export class PythonMarketDataProvider implements MarketDataProvider {
       });
     });
   }
+}
+
+function resolveDefaultPythonCommand(): string {
+  return fs.existsSync("venv/bin/python") ? "venv/bin/python" : "python3";
 }

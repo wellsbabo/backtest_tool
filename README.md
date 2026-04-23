@@ -46,9 +46,20 @@ The current workflow is:
 ## Install
 
 ```bash
+# Node.js 패키지 설치
 npm install
+
+# Python 가상 환경 생성 및 활성화 (권장)
+# macOS/Linux에서 'externally-managed-environment' 에러 발생 시 필수
+python3 -m venv venv
+source venv/bin/activate
+
+# Python 패키지 설치 (가상 환경이 활성화된 상태에서 실행)
 pip install finance-datareader pandas
 ```
+
+> [!TIP]
+> 만약 `pip` 명령어를 찾을 수 없거나 시스템 환경 에러가 발생하면 위와 같이 가상 환경(`venv`)을 먼저 생성하고 활성화한 뒤 설치해 주세요.
 
 ## Run
 

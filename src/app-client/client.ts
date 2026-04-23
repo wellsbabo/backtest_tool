@@ -194,11 +194,25 @@ function renderChart(preview: ChartPreviewPayload) {
         mode: "index",
         intersect: false,
       },
+      layout: {
+        padding: {
+          top: 8,
+          right: 8,
+          bottom: 4,
+          left: 4,
+        },
+      },
       plugins: {
         legend: {
           labels: {
             color: "#f5f7fb",
-            boxWidth: 18,
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true,
+            padding: 12,
+            font: {
+              size: 12,
+            },
           },
         },
         tooltip: {
@@ -211,7 +225,8 @@ function renderChart(preview: ChartPreviewPayload) {
         x: {
           ticks: {
             color: "#99a8bf",
-            maxTicksLimit: 8,
+            maxTicksLimit: 5,
+            maxRotation: 0,
           },
           grid: {
             color: "rgba(255,255,255,0.08)",
@@ -220,6 +235,7 @@ function renderChart(preview: ChartPreviewPayload) {
         y: {
           ticks: {
             color: "#99a8bf",
+            maxTicksLimit: 6,
             callback: (value) => Number(value).toLocaleString(),
           },
           grid: {
