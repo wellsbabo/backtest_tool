@@ -13,8 +13,10 @@ The current workflow is:
 
 - Single-symbol strategy comparison
 - Multi-symbol comparison using comma-separated input
+- Market prefix to currency mapping for `KRX`, `NASDAQ`, `NYSE`, `AMEX`, `TYO`
+- Normalized price comparison and FX-converted price comparison
 - Buy and Hold, 5D Breakout, 20D Breakout presets
-- Initial capital, date range, and strategy selection in the GUI
+- Initial capital, base currency, date range, and option selection in the GUI
 - Progressive line chart preview with Chart.js
 - Summary cards for final value, return, drawdown, and trade count
 
@@ -80,9 +82,10 @@ http://localhost:3000
 2. Use commas to compare multiple symbols.
 3. Choose the date range.
 4. Enter the initial capital.
-5. Select one or more strategies.
-6. Click `Preview Chart`.
-7. Wait for the chart animation and capture the screen if needed.
+5. Choose a base currency for FX-converted price lines.
+6. Select one or more chart options or strategies.
+7. Click `Preview Chart`.
+8. Wait for the chart animation and capture the screen if needed.
 
 ## Symbol input examples
 
@@ -90,7 +93,18 @@ http://localhost:3000
 - `NASDAQ: AAPL`
 - `NASDAQ: MSFT`
 - `NYSE: SPY`
+- `TYO: 7974`
 - `KRX: 005930, NASDAQ: AAPL`
+
+## Price options
+
+- `Normalized Price`
+  - Sets each selected symbol's first close to `100`.
+  - Best for comparing relative performance across currencies.
+- `FX Converted Price`
+  - Converts each selected symbol's close price into the selected base currency.
+  - Uses the market prefix currency mapping first, then fetches FX rates through the Python `FinanceDataReader` adapter.
+  - Supported mapping currently includes `KRX -> KRW`, `NASDAQ/NYSE/AMEX -> USD`, and `TYO/TSE -> JPY`.
 
 ## What comparisons are supported
 

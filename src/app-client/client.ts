@@ -30,6 +30,7 @@ const symbolInput = document.querySelector<HTMLInputElement>("#symbol");
 const exampleButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".example-chip"));
 const statusEl = document.querySelector<HTMLDivElement>("#status");
 const summaryEl = document.querySelector<HTMLDivElement>("#summary");
+const warningBanner = document.querySelector<HTMLDivElement>("#warning-banner");
 const chartTitleEl = document.querySelector<HTMLHeadingElement>("#chart-title");
 const chartSubtitleEl = document.querySelector<HTMLParagraphElement>("#chart-subtitle");
 const chartCanvas = document.querySelector<HTMLCanvasElement>("#result-chart");
@@ -43,6 +44,14 @@ let chart: {destroy: () => void} | null = null;
 let chartAnimationStarted = false;
 let chartSpeedMultiplier = 1;
 let latestPreview: ChartPreviewPayload | null = null;
+
+function hasMissingMarketPrefix(symbolInputValue: string): boolean {
+  return symbolInputValue
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .some((value) => !/^[A-Za-z]+\s*:\s*.+$/.test(value));
+}
 
 function updateSpeedIndicator() {
   if (speedIndicator) {
@@ -74,6 +83,21 @@ function renderSummary(summary: Extract<JobResponse, {status: "completed"}>["sum
       `;
     })
     .join("");
+}
+
+function renderWarnings(warnings: string[] | undefined) {
+  if (!warningBanner) {
+    return;
+  }
+
+  if (!warnings || warnings.length === 0) {
+    warningBanner.hidden = true;
+    warningBanner.textContent = "";
+    return;
+  }
+
+  warningBanner.hidden = false;
+  warningBanner.textContent = warnings.join(" ");
 }
 
 function buildDatasets(preview: ChartPreviewPayload): ChartDataset<"line", number[]>[] {
@@ -227,6 +251,7 @@ async function pollJob(jobId: string) {
 
     if (job.status === "completed") {
       setStatus("Chart ready");
+      renderWarnings(job.preview.warnings);
       renderSummary(job.summary);
       renderChart(job.preview);
       return;
@@ -272,15 +297,22 @@ form?.addEventListener("submit", async (event) => {
   const startDate = (document.querySelector<HTMLInputElement>("#start-date")?.value ?? "").trim();
   const endDate = (document.querySelector<HTMLInputElement>("#end-date")?.value ?? "").trim();
   const capital = Number((document.querySelector<HTMLInputElement>("#capital")?.value ?? "0").trim());
+  const baseCurrency = (document.querySelector<HTMLSelectElement>("#base-currency")?.value ?? "KRW").trim();
   const strategyIds = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="strategy"]:checked')).map(
     (input) => input.value,
   );
   const symbol = symbolInput?.value.trim() ?? "";
 
+  if (hasMissingMarketPrefix(symbol)) {
+    window.alert("Every symbol must include a market prefix. Example: KRX: 005930, NASDAQ: MSFT");
+    return;
+  }
+
   setStatus("Submitting request");
   if (summaryEl) {
     summaryEl.innerHTML = "";
   }
+  renderWarnings([]);
   if (chartTitleEl) {
     chartTitleEl.textContent = "Chart Preview";
   }
@@ -300,6 +332,7 @@ form?.addEventListener("submit", async (event) => {
       startDate,
       endDate,
       capital,
+      baseCurrency,
       strategyIds,
     }),
   });

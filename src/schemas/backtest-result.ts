@@ -44,4 +44,5 @@ export type ChartPreviewPayload = {
   title: string;
   subtitle?: string;
   series: StrategyRunResult[];
+  warnings?: string[];
 };

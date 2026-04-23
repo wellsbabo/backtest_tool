@@ -127,7 +127,7 @@ input {
 
 .checkbox {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 10px;
 }
@@ -135,6 +135,21 @@ input {
 .checkbox input {
   width: 18px;
   height: 18px;
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+.checkbox span {
+  color: var(--text);
+  margin-bottom: 0;
+}
+
+.checkbox small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 button {
@@ -174,6 +189,17 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
+}
+
+.warning-banner {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(247, 198, 107, 0.14);
+  border: 1px solid rgba(247, 198, 107, 0.35);
+  color: #ffd78a;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .summary-card {
