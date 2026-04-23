@@ -1,170 +1,136 @@
-# 퀀트 백테스트 데스크톱
+# Backtest Chart App
 
-`app.py`는 종목 가격 데이터를 불러와 이동평균 기반 전략을 로컬 GUI에서 테스트하는 데스크톱 프로그램입니다.  
-브라우저 기반 `Streamlit`이 아니라 `tkinter` 윈도우 앱으로 동작합니다.
+This project uses a Python market-data adapter and a TypeScript GUI to compare symbols and strategies with a progressive line chart preview.
 
-## 주요 기능
+The current workflow is:
 
-- 종목코드, 시작일, 종료일, 초기 투자금을 입력해 백테스트 실행
-- 전략 프리셋 선택 가능
-- 매수 이동평균 기간, 매수 조건, 매도 이동평균 기간, 매도 조건, 거래비용 직접 수정 가능
-- 결과 요약 지표 표시
-- 일자별 결과 테이블 표시
+- Fetch free daily close data with Python and `FinanceDataReader`
+- Run strategy comparisons in TypeScript
+- Preview the result as an animated chart in the browser
+- Capture the screen with OBS or Windows screen recording instead of rendering MP4 inside the app
 
-## 현재 전략 구조
+## Main features
 
-이 프로그램은 종가와 이동평균선을 비교해 진입과 청산을 판단합니다.
+- Single-symbol strategy comparison
+- Multi-symbol comparison using comma-separated input
+- Buy and Hold, 5D Breakout, 20D Breakout presets
+- Initial capital, date range, and strategy selection in the GUI
+- Progressive line chart preview with Chart.js
+- Summary cards for final value, return, drawdown, and trade count
 
-- 매수 조건 예시: `종가가 5일 이동평균선을 상향 돌파`
-- 매도 조건 예시: `종가가 20일 이동평균선을 하향 돌파`
-- 지원 조건
-  - 매수: `상향 돌파`, `이상`, `초과`
-  - 매도: `하향 돌파`, `이하`, `미만`, `사용 안 함`
+## Current architecture
 
-`사용 안 함`을 선택하면 자동 청산 없이 계속 보유하는 방식으로 계산합니다.
+- [app.py](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/app.py:1)
+  - legacy Python reference app
+- [scripts/fetch_market_data.py](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/scripts/fetch_market_data.py:1)
+  - Python market-data adapter
+- [src/app/server.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/app/server.ts:1)
+  - GUI server and preview API
+- [src/app-client/client.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/app-client/client.ts:1)
+  - Chart.js preview client
+- [src/engine/backtest.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/engine/backtest.ts:1)
+  - backtest engine
+- [src/strategies/presets.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/strategies/presets.ts:1)
+  - strategy presets
+- [public/index.html](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/public/index.html:1)
+  - browser UI
 
-## 실행 환경
+## Requirements
 
-- Windows
-- Python 3.10 이상 권장
+- Python 3.13+
+- Node.js 20+
+- npm 10+
 
-## 설치 방법
+## Install
 
-### 1. 가상환경 선택 사항
-
-원하면 가상환경을 만든 뒤 실행합니다.
-
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
+```bash
+npm install
+pip install finance-datareader pandas
 ```
 
-### 2. 필요 패키지 설치
+## Run
 
-```powershell
-pip install pandas FinanceDataReader
+Type check:
+
+```bash
+npm run check
 ```
 
-`tkinter`는 일반적인 Windows Python 설치에 기본 포함되는 경우가 많습니다.
+Tests:
 
-## 실행 방법
-
-프로젝트 폴더에서 아래 명령으로 실행합니다.
-
-```powershell
-python app.py
+```bash
+npm test
 ```
 
-정상 실행되면 로컬 윈도우 창이 열립니다.
+Start the app:
 
-## 화면 사용 방법
-
-### 1. 기본 정보 입력
-
-- 종목코드
-  - 예: `005930`
-- 시작일
-  - 형식: `YYYY-MM-DD`
-- 종료일
-  - 형식: `YYYY-MM-DD`
-- 초기 투자금
-
-### 2. 전략 프리셋 선택
-
-초기 제공 프리셋은 아래와 같습니다.
-
-- `5일선 돌파`
-- `20일선 돌파`
-- `커스텀`
-
-프리셋을 고르면 설명과 기본 규칙값이 자동으로 채워집니다.
-
-### 3. 전략 규칙 수정
-
-아래 값을 직접 바꿀 수 있습니다.
-
-- 매수 이동평균
-- 매수 조건
-- 매도 이동평균
-- 매도 조건
-- 거래비용(%)
-
-프리셋을 선택한 뒤 값을 수정하면 전략은 사실상 `커스텀` 전략으로 동작합니다.
-
-### 4. 조회 실행
-
-`조회 실행` 버튼을 누르면 가격 데이터를 불러와 백테스트를 수행합니다.
-
-## 결과 해석
-
-상단 요약 지표
-
-- 초기 투자금
-- 최종 잔고
-- 손익
-- 누적 수익률
-
-하단 결과 테이블
-
-- 날짜
-- 종가
-- 매수선
-- 매도선
-- 신호
-  - `매수`, `매도`, `대기`
-- 상태
-  - `보유`, `현금`
-- 수익률
-- 잔고
-
-## 오류가 날 수 있는 경우
-
-### `FinanceDataReader` 관련 오류
-
-아래 패키지가 없으면 실행 중 오류가 납니다.
-
-```powershell
-pip install FinanceDataReader
+```bash
+npm run app
 ```
 
-환경에 따라 아래 명령이 필요한 경우도 있습니다.
+Open:
 
-```powershell
-pip install finance-datareader
+```text
+http://localhost:3000
 ```
 
-### 날짜 형식 오류
+## How to use
 
-시작일과 종료일은 반드시 `YYYY-MM-DD` 형식이어야 합니다.
+1. Enter one or more symbols in the `market: code` format.
+2. Use commas to compare multiple symbols.
+3. Choose the date range.
+4. Enter the initial capital.
+5. Select one or more strategies.
+6. Click `Preview Chart`.
+7. Wait for the chart animation and capture the screen if needed.
 
-예시:
+## Symbol input examples
 
-- `2023-01-01`
-- `2024-12-31`
+- `KRX: 005930`
+- `NASDAQ: AAPL`
+- `NASDAQ: MSFT`
+- `NYSE: SPY`
+- `KRX: 005930, NASDAQ: AAPL`
 
-### 데이터 부족
+## What comparisons are supported
 
-기간이 너무 짧거나 이동평균 기간이 너무 길면 계산 가능한 데이터가 부족할 수 있습니다.
+- One symbol + multiple strategies
+- Multiple symbols + the same selected strategies
+- Multiple symbols + multiple strategies together
 
-예시:
+Examples:
 
-- 조회 기간이 10일인데 20일 이동평균 사용
+- `NASDAQ: QQQ` with `Buy and Hold` + `5D Breakout`
+- `KRX: 005930, NASDAQ: AAPL` with `Buy and Hold`
+- `KRX: 005930, NASDAQ: AAPL, NYSE: SPY` with all presets
 
-## 현재 제약 사항
+## Output
 
-- 차트는 아직 없습니다
-- 종가와 이동평균 비교 기반 전략만 지원합니다
-- 손절, 익절, 분할매수, 비중 조절 기능은 없습니다
-- 실거래 연동 기능은 없습니다
+The app returns:
 
-## 파일 구성
+- summary cards
+- progressive line chart preview
+- browser-based visualization ready for screen capture
 
-- [app.py](c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/app.py:1): 메인 GUI 프로그램
+The CLI helper still prints structured preview JSON:
 
-## 향후 확장 아이디어
+```bash
+npm run sample:json
+```
 
-- 가격 차트와 매수/매도 시점 시각화
-- 이동평균 대 이동평균 전략 추가
-- 손절/익절 규칙 추가
-- 백테스트 결과 CSV 저장
-- 실행 파일(`.exe`) 패키징
+## Current assumptions
+
+- Daily close only
+- Long-only
+- Full allocation on buy
+- Full exit on sell
+- Fee applied on each entry and exit
+
+## Current limitations
+
+- No dividends
+- No taxes
+- No slippage
+- No partial fills
+- No DCA logic yet
+- No multi-asset portfolio rebalancing

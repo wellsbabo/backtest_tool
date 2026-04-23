@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backtest Chart App</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="eyebrow">TypeScript Backtest Studio</div>
+        <h1>Investment Comparison Chart</h1>
+        <p class="lead">Compare symbols and strategies, then capture the animated chart from the screen.</p>
+
+        <form id="scenario-form" class="form">
+          <label>
+            <span>Symbols</span>
+            <input id="symbol" type="text" value="NASDAQ: QQQ" placeholder="KRX: 005930, NASDAQ: AAPL, NASDAQ: MSFT" required />
+            <small class="field-help">Use commas for symbol comparisons. Example: `KRX: 005930, NASDAQ: AAPL`</small>
+            <div class="input-examples">
+              <button type="button" class="example-chip" data-symbol="KRX: 005930">KRX: 005930</button>
+              <button type="button" class="example-chip" data-symbol="NASDAQ: AAPL">NASDAQ: AAPL</button>
+              <button type="button" class="example-chip" data-symbol="NASDAQ: MSFT">NASDAQ: MSFT</button>
+              <button type="button" class="example-chip" data-symbol="NYSE: SPY">NYSE: SPY</button>
+              <button type="button" class="example-chip" data-symbol="KRX: 005930, NASDAQ: AAPL">KRX: 005930, NASDAQ: AAPL</button>
+            </div>
+          </label>
+
+          <div class="quick-links">
+            <a href="https://finance.naver.com/" target="_blank" rel="noreferrer">Naver Finance</a>
+            <a href="https://finance.yahoo.com/" target="_blank" rel="noreferrer">Yahoo Finance</a>
+            <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>
+          </div>
+
+          <label>
+            <span>Start Date</span>
+            <input id="start-date" type="date" value="2024-01-01" required />
+          </label>
+
+          <label>
+            <span>End Date</span>
+            <input id="end-date" type="date" value="2024-12-31" required />
+          </label>
+
+          <label>
+            <span>Initial Capital</span>
+            <input id="capital" type="number" min="1" step="1" value="10000000" required />
+          </label>
+
+          <fieldset class="strategy-group">
+            <legend>Strategies</legend>
+            <label class="checkbox">
+              <input type="checkbox" name="strategy" value="buy-and-hold" checked />
+              <span>Buy and Hold</span>
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="strategy" value="ma-5-breakout" checked />
+              <span>5D Breakout</span>
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="strategy" value="ma-20-breakout" checked />
+              <span>20D Breakout</span>
+            </label>
+          </fieldset>
+
+          <button id="generate-button" type="submit">Preview Chart</button>
+        </form>
+      </aside>
+
+      <main class="content">
+        <section class="panel status-panel">
+          <div class="panel-title">Status</div>
+          <div id="status">Idle</div>
+        </section>
+
+        <section class="panel summary-panel">
+          <div class="panel-title">Summary</div>
+          <div id="summary" class="summary-grid"></div>
+        </section>
+
+        <section class="panel preview-panel">
+          <div class="panel-title">Chart Preview</div>
+          <h2 id="chart-title" class="chart-heading">Chart Preview</h2>
+          <p id="chart-subtitle" class="chart-subtitle">Use screen recording after the animation settles.</p>
+          <div class="chart-stage">
+            <canvas id="result-chart"></canvas>
+          </div>
+          <div class="chart-controls">
+            <button type="button" id="speed-down" class="chart-control-button">Speed -</button>
+            <button type="button" id="speed-up" class="chart-control-button">Speed +</button>
+            <button type="button" id="replay-chart" class="chart-control-button primary">Replay</button>
+          </div>
+          <div id="speed-indicator" class="speed-indicator">Speed: 1.0x</div>
+          <p class="capture-note">Tip: Maximize the window and use OBS or Windows screen recording for clean capture.</p>
+        </section>
+      </main>
+    </div>
+    <script src="/vendor/chart.umd.js"></script>
+    <script type="module" src="/assets/client.js"></script>
+  </body>
+  </html>

@@ -1,0 +1,28 @@
+{
+  "name": "backtest",
+  "version": "1.0.0",
+  "description": "Python market-data adapter plus TypeScript backtest GUI with progressive chart preview.",
+  "type": "module",
+  "main": "dist/src/cli/run-backtest.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node dist/src/tests/run-tests.js",
+    "sample:json": "npm run build && node dist/src/cli/run-backtest.js --symbol QQQ --start 2024-01-01 --end 2024-12-31 --capital 10000000",
+    "app": "npm run build && node dist/src/app/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "express": "^5.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0"
+  }
+}

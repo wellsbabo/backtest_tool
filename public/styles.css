@@ -1,0 +1,270 @@
+:root {
+  --bg: #07111f;
+  --panel: #0f1c2f;
+  --panel-2: #13243b;
+  --text: #f5f7fb;
+  --muted: #99a8bf;
+  --accent: #68e1fd;
+  --line: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top right, rgba(104, 225, 253, 0.15), transparent 28%),
+    linear-gradient(180deg, #06101d 0%, #0c1830 100%);
+  color: var(--text);
+}
+
+#app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+}
+
+.sidebar {
+  padding: 32px 28px;
+  border-right: 1px solid var(--line);
+  background: rgba(4, 10, 19, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+.eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.04;
+}
+
+.lead {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 16px 0 28px;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+label span,
+legend {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.field-help {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 15px;
+}
+
+.input-examples {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.example-chip {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.quick-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quick-links a {
+  text-decoration: none;
+  color: var(--text);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.strategy-group {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  padding: 14px 16px 6px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+button {
+  border: 0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #04121d;
+  background: linear-gradient(135deg, var(--accent) 0%, #c5f6ff 100%);
+  cursor: pointer;
+}
+
+.content {
+  padding: 28px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 20px;
+}
+
+.panel {
+  background: rgba(15, 28, 47, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 20px;
+}
+
+.panel-title {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  border-radius: 18px;
+  background: var(--panel-2);
+  padding: 16px;
+}
+
+.summary-card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.summary-card strong {
+  display: block;
+  font-size: 24px;
+}
+
+.chart-heading {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.chart-subtitle {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.chart-stage {
+  position: relative;
+  min-height: 520px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(circle at top, rgba(104, 225, 253, 0.12), transparent 32%),
+    #02060d;
+  padding: 18px;
+}
+
+#result-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.capture-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.chart-control-button {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chart-control-button.primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #c5f6ff 100%);
+  color: #04121d;
+  border: 0;
+}
+
+.speed-indicator {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  #app {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .chart-stage {
+    min-height: 360px;
+  }
+}
