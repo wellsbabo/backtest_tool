@@ -57,10 +57,30 @@
             </select>
           </label>
 
+          <label>
+            <span>Frequency</span>
+            <select id="frequency">
+              <option value="day" selected>Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Legend Aliases</span>
+            <textarea
+              id="legend-aliases"
+              rows="5"
+              placeholder="NASDAQ: AAPL = Apple&#10;KRX: 005930 = Samsung&#10;Buy and Hold = Hold"
+            ></textarea>
+            <small class="field-help">Use one rule per line. Each rule is applied to matching symbol or strategy names.</small>
+          </label>
+
           <fieldset class="strategy-group">
             <legend>Options</legend>
             <label class="checkbox">
-              <input type="checkbox" name="strategy" value="normalized-price" checked />
+              <input type="checkbox" name="strategy" value="normalized-price" />
               <span>
                 Normalized Price
                 <small>Starts every symbol at 100. Best for relative performance across currencies.</small>
@@ -74,15 +94,15 @@
               </span>
             </label>
             <label class="checkbox">
-              <input type="checkbox" name="strategy" value="buy-and-hold" checked />
+              <input type="checkbox" name="strategy" value="buy-and-hold" />
               <span>Buy and Hold</span>
             </label>
             <label class="checkbox">
-              <input type="checkbox" name="strategy" value="ma-5-breakout" checked />
+              <input type="checkbox" name="strategy" value="ma-5-breakout" />
               <span>5D Breakout</span>
             </label>
             <label class="checkbox">
-              <input type="checkbox" name="strategy" value="ma-20-breakout" checked />
+              <input type="checkbox" name="strategy" value="ma-20-breakout" />
               <span>20D Breakout</span>
             </label>
           </fieldset>
@@ -109,15 +129,19 @@
           <div class="chart-stage">
             <canvas id="result-chart"></canvas>
           </div>
+          <div id="chart-legend" class="chart-legend"></div>
           <div class="chart-controls">
             <button type="button" id="speed-down" class="chart-control-button">Speed -</button>
             <button type="button" id="speed-up" class="chart-control-button">Speed +</button>
             <button type="button" id="replay-chart" class="chart-control-button primary">Replay</button>
           </div>
-          <div id="speed-indicator" class="speed-indicator">Speed: 1.0x</div>
+          <div id="speed-indicator" class="speed-indicator">Speed: 8.0x</div>
           <p class="capture-note">Tip: Maximize the window and use OBS or Windows screen recording for clean capture.</p>
         </section>
       </main>
+    </div>
+    <div id="loading-modal" class="loading-modal" hidden>
+      <div class="loading-modal-card">Loading...</div>
     </div>
     <script src="/vendor/chart.umd.js"></script>
     <script type="module" src="/assets/client.js"></script>

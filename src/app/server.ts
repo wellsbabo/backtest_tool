@@ -23,6 +23,7 @@ type ScenarioPayload = {
   capital: number;
   strategyIds: string[];
   baseCurrency: CurrencyCode;
+  frequency: "day" | "week" | "month" | "year";
 };
 
 type CompletedJob = {
@@ -84,6 +85,10 @@ function ensureScenarioPayload(payload: unknown): ScenarioPayload {
     throw new Error("At least one valid symbol is required.");
   }
   const baseCurrency = typeof candidate.baseCurrency === "string" ? candidate.baseCurrency.toUpperCase() : "KRW";
+  const frequency = candidate.frequency;
+  if (frequency !== "day" && frequency !== "week" && frequency !== "month" && frequency !== "year") {
+    throw new Error("Frequency must be one of day, week, month, or year.");
+  }
 
   return {
     symbols,
@@ -92,6 +97,7 @@ function ensureScenarioPayload(payload: unknown): ScenarioPayload {
     capital: candidate.capital,
     strategyIds,
     baseCurrency,
+    frequency,
   };
 }
 
@@ -220,8 +226,9 @@ async function runScenario(jobId: string, scenario: ScenarioPayload) {
           currency: symbol.currency,
           market: symbol.prefix,
         }));
+        const sampledBars = resampleBars(bars, scenario.frequency);
 
-        const strategyResults = compareStrategies(scenario.capital, bars, selectedStrategies).map((result) => ({
+        const strategyResults = compareStrategies(scenario.capital, sampledBars, selectedStrategies).map((result) => ({
           ...result,
           strategyId: `${symbol.displaySymbol}__${result.strategyId}`,
           strategyLabel: `${symbol.displaySymbol} | ${result.strategyLabel}`,
@@ -232,11 +239,11 @@ async function runScenario(jobId: string, scenario: ScenarioPayload) {
 
         const optionResults: StrategyRunResult[] = [];
         if (includeNormalizedPrice) {
-          optionResults.push(createPriceSeries(symbol, bars, "normalized"));
+          optionResults.push(createPriceSeries(symbol, sampledBars, "normalized"));
         }
         if (includeConvertedPrice) {
           optionResults.push(
-            await createConvertedPriceSeries(symbol, bars, scenario.baseCurrency, scenario.startDate, scenario.endDate),
+            await createConvertedPriceSeries(symbol, sampledBars, scenario.baseCurrency, scenario.startDate, scenario.endDate),
           );
         }
 
@@ -263,6 +270,37 @@ async function runScenario(jobId: string, scenario: ScenarioPayload) {
       error: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+function resampleBars(bars: DailyCloseBar[], frequency: ScenarioPayload["frequency"]): DailyCloseBar[] {
+  if (frequency === "day") {
+    return bars;
+  }
+
+  const grouped = new Map<string, DailyCloseBar>();
+  for (const bar of bars) {
+    grouped.set(getBucketKey(bar.date, frequency), bar);
+  }
+
+  return [...grouped.values()].sort((left, right) => left.date.localeCompare(right.date));
+}
+
+function getBucketKey(date: string, frequency: Exclude<ScenarioPayload["frequency"], "day">): string {
+  if (frequency === "month") {
+    return date.slice(0, 7);
+  }
+
+  if (frequency === "year") {
+    return date.slice(0, 4);
+  }
+
+  const utcDate = new Date(`${date}T00:00:00Z`);
+  const weekYearDate = new Date(Date.UTC(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate()));
+  const dayNumber = weekYearDate.getUTCDay() || 7;
+  weekYearDate.setUTCDate(weekYearDate.getUTCDate() + 4 - dayNumber);
+  const yearStart = new Date(Date.UTC(weekYearDate.getUTCFullYear(), 0, 1));
+  const weekNumber = Math.ceil((((weekYearDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${weekYearDate.getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
 }
 
 export async function startAppServer(port = 3000) {

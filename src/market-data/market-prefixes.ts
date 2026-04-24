@@ -79,6 +79,9 @@ export function parsePrefixedSymbol(rawSymbol: string): ParsedSymbol {
 
   const rawPrefix = match[1].trim().toUpperCase();
   const code = match[2].trim().toUpperCase();
+  if (/[A-Z]+\s*:/.test(code)) {
+    throw new Error(`Multiple symbols must be separated by commas: ${trimmed}`);
+  }
   const marketInfo = marketPrefixMap[rawPrefix];
   if (!marketInfo) {
     throw new Error(`Unsupported market prefix: ${rawPrefix}`);
