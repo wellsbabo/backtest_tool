@@ -1,41 +1,42 @@
 # Backtest Chart App
 
-This project uses a Python market-data adapter and a TypeScript GUI to compare symbols and strategies with a progressive line chart preview.
+This project combines a Python market-data adapter with a TypeScript desktop-style browser UI for investment comparison charts.
 
-The current workflow is:
+The current product direction is:
 
-- Fetch free daily close data with Python and `FinanceDataReader`
-- Run strategy comparisons in TypeScript
-- Preview the result as an animated chart in the browser
-- Capture the screen with OBS or Windows screen recording instead of rendering MP4 inside the app
+- fetch free daily close data with Python and `FinanceDataReader`
+- run backtests and comparison calculations in TypeScript
+- preview animated charts in the browser with Chart.js
+- capture the browser screen instead of rendering video files inside the app
 
 ## Main features
 
-- Single-symbol strategy comparison
-- Multi-symbol comparison using comma-separated input
-- Market prefix to currency mapping for `KRX`, `NASDAQ`, `NYSE`, `AMEX`, `TYO`
-- Normalized price comparison and FX-converted price comparison
-- Buy and Hold, 5D Breakout, 20D Breakout presets
-- Initial capital, base currency, date range, and option selection in the GUI
-- Progressive line chart preview with Chart.js
-- Summary cards for final value, return, drawdown, and trade count
+- multi-symbol comparison with comma-separated input
+- required market prefixes such as `KRX: 005930` and `NASDAQ: AAPL`
+- strategy comparison on the same symbol
+- cross-market comparison with normalized price and FX-converted price
+- built-in presets:
+  - `Buy and Hold`
+  - `5D Breakout`
+  - `20D Breakout`
+- progressive chart animation with speed controls
 
 ## Current architecture
 
 - [app.py](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/app.py:1)
-  - legacy Python reference app
+  - legacy Python reference prototype
 - [scripts/fetch_market_data.py](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/scripts/fetch_market_data.py:1)
-  - Python market-data adapter
+  - Python adapter for daily close data
 - [src/app/server.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/app/server.ts:1)
-  - GUI server and preview API
+  - Express server and preview API
 - [src/app-client/client.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/app-client/client.ts:1)
-  - Chart.js preview client
+  - browser client and Chart.js rendering
 - [src/engine/backtest.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/engine/backtest.ts:1)
-  - backtest engine
-- [src/strategies/presets.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/strategies/presets.ts:1)
-  - strategy presets
-- [public/index.html](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/public/index.html:1)
-  - browser UI
+  - TypeScript backtest engine
+- [src/market-data/market-prefixes.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/market-data/market-prefixes.ts:1)
+  - market prefix, currency, and provider-symbol mapping
+- [src/market-data/fx-rates.ts](/c:/Users/LeeJungkwan/Desktop/work/save/JK_P/backtest/src/market-data/fx-rates.ts:1)
+  - FX lookup and on-disk rate cache
 
 ## Requirements
 
@@ -46,20 +47,17 @@ The current workflow is:
 ## Install
 
 ```bash
-# Node.js 패키지 설치
 npm install
-
-# Python 가상 환경 생성 및 활성화 (권장)
-# macOS/Linux에서 'externally-managed-environment' 에러 발생 시 필수
-python3 -m venv venv
-source venv/bin/activate
-
-# Python 패키지 설치 (가상 환경이 활성화된 상태에서 실행)
 pip install finance-datareader pandas
 ```
 
-> [!TIP]
-> 만약 `pip` 명령어를 찾을 수 없거나 시스템 환경 에러가 발생하면 위와 같이 가상 환경(`venv`)을 먼저 생성하고 활성화한 뒤 설치해 주세요.
+If you prefer an isolated Python environment:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install finance-datareader pandas
+```
 
 ## Run
 
@@ -81,6 +79,13 @@ Start the app:
 npm run app
 ```
 
+The app now tries Python in this order:
+
+1. `BACKTEST_PYTHON` if set
+2. `venv/Scripts/python.exe` or `.venv/Scripts/python.exe` on Windows
+3. `venv/bin/python` or `.venv/bin/python` on macOS/Linux
+4. system `python` on Windows or `python3` on macOS/Linux
+
 Open:
 
 ```text
@@ -89,16 +94,16 @@ http://localhost:3000
 
 ## How to use
 
-1. Enter one or more symbols in the `market: code` format.
-2. Use commas to compare multiple symbols.
+1. Enter one or more symbols in `market: code` format.
+2. Separate multiple symbols with commas.
 3. Choose the date range.
 4. Enter the initial capital.
-5. Choose a base currency for FX-converted price lines.
-6. Select one or more chart options or strategies.
+5. Select the base currency if you want FX-converted price lines.
+6. Select one or more price options or strategy presets.
 7. Click `Preview Chart`.
-8. Wait for the chart animation and capture the screen if needed.
+8. Use the speed controls or replay button if needed.
 
-## Symbol input examples
+## Symbol examples
 
 - `KRX: 005930`
 - `NASDAQ: AAPL`
@@ -107,55 +112,69 @@ http://localhost:3000
 - `TYO: 7974`
 - `KRX: 005930, NASDAQ: AAPL`
 
+## Supported market prefix mapping
+
+- `KRX`, `KOSPI`, `KOSDAQ` -> `KRW`
+- `NASDAQ`, `NYSE`, `AMEX` -> `USD`
+- `TYO`, `TSE` -> `JPY`
+
+`TYO` and `TSE` symbols are converted to `.T` format for the Python provider.
+
 ## Price options
 
 - `Normalized Price`
-  - Sets each selected symbol's first close to `100`.
-  - Best for comparing relative performance across currencies.
-- `FX Converted Price`
-  - Converts each selected symbol's close price into the selected base currency.
-  - Uses the market prefix currency mapping first, then fetches FX rates through the Python `FinanceDataReader` adapter.
-  - Supported mapping currently includes `KRX -> KRW`, `NASDAQ/NYSE/AMEX -> USD`, and `TYO/TSE -> JPY`.
+  - sets every selected symbol to `100` on the first visible date
+  - best for relative performance comparison across different currencies
+- `FX Converted Price with historical FX`
+  - converts each date using that date's FX rate
+  - best for absolute value comparison from the perspective of a selected base currency
 
-## What comparisons are supported
+## Current assumptions
 
-- One symbol + multiple strategies
-- Multiple symbols + the same selected strategies
-- Multiple symbols + multiple strategies together
+- daily close only
+- long-only
+- full allocation on buy
+- full exit on sell
+- fee applied on each entry and exit
 
-Examples:
+## Current limitations
 
-- `NASDAQ: QQQ` with `Buy and Hold` + `5D Breakout`
-- `KRX: 005930, NASDAQ: AAPL` with `Buy and Hold`
-- `KRX: 005930, NASDAQ: AAPL, NYSE: SPY` with all presets
+- no dividends
+- no taxes
+- no slippage
+- no partial fills
+- no DCA logic yet
+- no portfolio rebalancing
+- FX conversion still depends on external provider availability for uncached dates
 
 ## Output
 
-The app returns:
+The app currently produces:
 
 - summary cards
-- progressive line chart preview
-- browser-based visualization ready for screen capture
+- animated comparison chart preview
+- browser-based output suitable for manual screen capture
 
-The CLI helper still prints structured preview JSON:
+The CLI helper still exists for structured output:
 
 ```bash
 npm run sample:json
 ```
 
-## Current assumptions
+## Python runtime notes
 
-- Daily close only
-- Long-only
-- Full allocation on buy
-- Full exit on sell
-- Fee applied on each entry and exit
+If `npm run app` fails with a Python-related message:
 
-## Current limitations
+- create and populate a virtual environment in the project root, or
+- point the app at a specific interpreter with `BACKTEST_PYTHON`
 
-- No dividends
-- No taxes
-- No slippage
-- No partial fills
-- No DCA logic yet
-- No multi-asset portfolio rebalancing
+Examples:
+
+```powershell
+$env:BACKTEST_PYTHON="C:\path\to\python.exe"
+npm run app
+```
+
+```bash
+BACKTEST_PYTHON=/path/to/python npm run app
+```

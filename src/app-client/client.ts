@@ -30,7 +30,6 @@ const symbolInput = document.querySelector<HTMLInputElement>("#symbol");
 const exampleButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".example-chip"));
 const statusEl = document.querySelector<HTMLDivElement>("#status");
 const summaryEl = document.querySelector<HTMLDivElement>("#summary");
-const warningBanner = document.querySelector<HTMLDivElement>("#warning-banner");
 const chartTitleEl = document.querySelector<HTMLHeadingElement>("#chart-title");
 const chartSubtitleEl = document.querySelector<HTMLParagraphElement>("#chart-subtitle");
 const chartCanvas = document.querySelector<HTMLCanvasElement>("#result-chart");
@@ -83,21 +82,6 @@ function renderSummary(summary: Extract<JobResponse, {status: "completed"}>["sum
       `;
     })
     .join("");
-}
-
-function renderWarnings(warnings: string[] | undefined) {
-  if (!warningBanner) {
-    return;
-  }
-
-  if (!warnings || warnings.length === 0) {
-    warningBanner.hidden = true;
-    warningBanner.textContent = "";
-    return;
-  }
-
-  warningBanner.hidden = false;
-  warningBanner.textContent = warnings.join(" ");
 }
 
 function buildDatasets(preview: ChartPreviewPayload): ChartDataset<"line", number[]>[] {
@@ -267,7 +251,6 @@ async function pollJob(jobId: string) {
 
     if (job.status === "completed") {
       setStatus("Chart ready");
-      renderWarnings(job.preview.warnings);
       renderSummary(job.summary);
       renderChart(job.preview);
       return;
@@ -328,7 +311,6 @@ form?.addEventListener("submit", async (event) => {
   if (summaryEl) {
     summaryEl.innerHTML = "";
   }
-  renderWarnings([]);
   if (chartTitleEl) {
     chartTitleEl.textContent = "Chart Preview";
   }

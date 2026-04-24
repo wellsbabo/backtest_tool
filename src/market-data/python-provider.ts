@@ -1,5 +1,6 @@
 import {spawn} from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 import type {DateString} from "../domain/types.js";
 import {z} from "zod";
 import type {MarketDataProvider, MarketDataRequest, MarketDataResponse} from "./types.js";
@@ -60,10 +61,12 @@ export class PythonMarketDataProvider implements MarketDataProvider {
         stderr += chunk.toString();
       });
 
-      child.on("error", reject);
+      child.on("error", (error) => {
+        reject(buildPythonLaunchError(this.pythonCommand, error));
+      });
       child.on("close", (code) => {
         if (code !== 0) {
-          reject(new Error(stderr.trim() || `Python adapter exited with code ${code}`));
+          reject(buildPythonRuntimeError(code, stderr));
           return;
         }
 
@@ -89,5 +92,58 @@ export class PythonMarketDataProvider implements MarketDataProvider {
 }
 
 function resolveDefaultPythonCommand(): string {
-  return fs.existsSync("venv/bin/python") ? "venv/bin/python" : "python3";
+  const configuredPython = process.env.BACKTEST_PYTHON?.trim();
+  if (configuredPython) {
+    return configuredPython;
+  }
+
+  const venvCandidates = process.platform === "win32" ? getWindowsVenvCandidates() : getPosixVenvCandidates();
+  const existingVenvPython = venvCandidates.find((candidate) => fs.existsSync(candidate));
+  if (existingVenvPython) {
+    return existingVenvPython;
+  }
+
+  return process.platform === "win32" ? "python" : "python3";
+}
+
+function getWindowsVenvCandidates(): string[] {
+  return [
+    path.join("venv", "Scripts", "python.exe"),
+    path.join(".venv", "Scripts", "python.exe"),
+  ];
+}
+
+function getPosixVenvCandidates(): string[] {
+  return [
+    path.join("venv", "bin", "python"),
+    path.join(".venv", "bin", "python"),
+  ];
+}
+
+function buildPythonLaunchError(pythonCommand: string, error: Error): Error {
+  const message = error.message || String(error);
+  return new Error(
+    [
+      `Python runtime could not be started with "${pythonCommand}".`,
+      "Create a virtual environment and install the Python dependencies, or set BACKTEST_PYTHON to a working interpreter.",
+      `Original error: ${message}`,
+    ].join(" "),
+  );
+}
+
+function buildPythonRuntimeError(code: number | null, stderr: string): Error {
+  const trimmed = stderr.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes("modulenotfounderror") || lower.includes("finance-datareader is required")) {
+    return new Error(
+      [
+        "Python dependencies are missing.",
+        "Install them with `pip install finance-datareader pandas` in the Python environment used by the app.",
+        trimmed || `Python adapter exited with code ${code}`,
+      ].join(" "),
+    );
+  }
+
+  return new Error(trimmed || `Python adapter exited with code ${code}`);
 }
