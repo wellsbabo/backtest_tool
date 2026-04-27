@@ -21,6 +21,7 @@ type ScenarioPayload = {
   startDate: `${number}-${number}-${number}`;
   endDate: `${number}-${number}-${number}`;
   capital: number;
+  savingsAnnualRatePct: number;
   strategyIds: string[];
   baseCurrency: CurrencyCode;
   frequency: "day" | "week" | "month" | "year";
@@ -76,6 +77,14 @@ function ensureScenarioPayload(payload: unknown): ScenarioPayload {
     throw new Error("Capital must be a positive number.");
   }
 
+  const savingsAnnualRatePct =
+    typeof candidate.savingsAnnualRatePct === "number" && Number.isFinite(candidate.savingsAnnualRatePct)
+      ? candidate.savingsAnnualRatePct
+      : 0;
+  if (savingsAnnualRatePct < 0) {
+    throw new Error("Savings annual rate must be 0 or higher.");
+  }
+
   if (strategyIds.length === 0) {
     throw new Error("At least one strategy must be selected.");
   }
@@ -95,6 +104,7 @@ function ensureScenarioPayload(payload: unknown): ScenarioPayload {
     startDate: candidate.startDate as `${number}-${number}-${number}`,
     endDate: candidate.endDate as `${number}-${number}-${number}`,
     capital: candidate.capital,
+    savingsAnnualRatePct,
     strategyIds,
     baseCurrency,
     frequency,
@@ -206,13 +216,76 @@ async function createConvertedPriceSeries(
   };
 }
 
+function createSavingsSeries(
+  capital: number,
+  annualRatePct: number,
+  bars: DailyCloseBar[],
+  currency: CurrencyCode,
+): StrategyRunResult {
+  if (bars.length === 0) {
+    throw new Error("Savings benchmark requires at least one bar.");
+  }
+
+  const annualRate = annualRatePct / 100;
+  const startDateMs = Date.parse(`${bars[0].date}T00:00:00Z`);
+  const timeline = bars.map((bar) => {
+    const elapsedDays = Math.max(0, (Date.parse(`${bar.date}T00:00:00Z`) - startDateMs) / 86400000);
+    const marketValue = capital * (1 + annualRate / 365) ** elapsedDays;
+
+    return {
+      date: bar.date,
+      close: marketValue,
+      investedPrincipal: capital,
+      marketValue,
+      cash: marketValue,
+      positionExposure: 0,
+      units: 0,
+      signal: "hold" as const,
+      cumulativeReturnPct: capital === 0 ? 0 : ((marketValue - capital) / capital) * 100,
+    };
+  });
+  const values = timeline.map((point) => point.marketValue);
+  const finalValue = values[values.length - 1] ?? capital;
+
+  return {
+    strategyId: "savings-interest",
+    strategyLabel: `Savings Interest Benchmark (${annualRatePct.toFixed(2)}%)`,
+    symbol: "Savings",
+    currency,
+    market: "BANK",
+    source: "Derived",
+    inputBars: bars,
+    timeline,
+    trades: [],
+    summary: {
+      initialCapital: capital,
+      finalValue,
+      investedPrincipal: capital,
+      profit: finalValue - capital,
+      totalReturnPct: capital === 0 ? 0 : ((finalValue - capital) / capital) * 100,
+      maxDrawdownPct: calculateMaxDrawdownPct(values),
+      tradeCount: 0,
+      startDate: bars[0]?.date ?? "",
+      endDate: bars[bars.length - 1]?.date ?? "",
+    },
+    chartDomain: {
+      minValue: Math.min(...values),
+      maxValue: Math.max(...values),
+      startDate: bars[0]?.date ?? "",
+      endDate: bars[bars.length - 1]?.date ?? "",
+    },
+  };
+}
+
 async function runScenario(jobId: string, scenario: ScenarioPayload) {
   jobs.set(jobId, {status: "running"});
 
   try {
     const includeConvertedPrice = scenario.strategyIds.includes("converted-price");
     const includeNormalizedPrice = scenario.strategyIds.includes("normalized-price");
+    const includeSavingsInterest = scenario.strategyIds.includes("savings-interest");
     const selectedStrategies = legacyPresetStrategies.filter((strategy) => scenario.strategyIds.includes(strategy.id));
+    let savingsBenchmarkBars: DailyCloseBar[] | null = null;
     const resultGroups = await Promise.all(
       scenario.symbols.map(async (symbol) => {
         const marketData = await provider.getDailyCloses({
@@ -227,6 +300,9 @@ async function runScenario(jobId: string, scenario: ScenarioPayload) {
           market: symbol.prefix,
         }));
         const sampledBars = resampleBars(bars, scenario.frequency);
+        if (!savingsBenchmarkBars) {
+          savingsBenchmarkBars = sampledBars;
+        }
 
         const strategyResults = compareStrategies(scenario.capital, sampledBars, selectedStrategies).map((result) => ({
           ...result,
@@ -252,6 +328,9 @@ async function runScenario(jobId: string, scenario: ScenarioPayload) {
     );
 
     const results = resultGroups.flat();
+    if (includeSavingsInterest && savingsBenchmarkBars) {
+      results.unshift(createSavingsSeries(scenario.capital, scenario.savingsAnnualRatePct, savingsBenchmarkBars, scenario.baseCurrency));
+    }
 
     jobs.set(jobId, {
       status: "completed",

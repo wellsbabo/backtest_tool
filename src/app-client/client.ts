@@ -71,6 +71,10 @@ let animationFrameId: number | null = null;
 let currentXAxisMarkers: Array<{position: number; label: string}> = [];
 let currentLineLabels: Array<{label: string; color: string; x: number; y: number; value: number}> = [];
 
+function dateToAxisValue(date: string): number {
+  return Date.parse(`${date}T00:00:00Z`);
+}
+
 function hasMissingMarketPrefix(symbolInputValue: string): boolean {
   return symbolInputValue
     .split(",")
@@ -244,38 +248,13 @@ function calculateVisibleYDomain(preview: ChartPreviewPayload, visiblePoints: nu
   };
 }
 
-function calculateXAxisLayout(labels: string[], totalPoints: number, visiblePoints: number) {
-  const focusWindow = Math.min(Math.max(20, Math.ceil(totalPoints * 0.16)), visiblePoints);
-  const compressedRatio = visiblePoints > focusWindow ? 0.32 : 0;
-  const historyCount = Math.max(0, visiblePoints - focusWindow);
-  const positions: number[] = [];
-
-  for (let index = 0; index < visiblePoints; index += 1) {
-    if (visiblePoints === 1) {
-      positions.push(0);
-      continue;
-    }
-
-    if (historyCount > 1 && index < historyCount) {
-      positions.push((index / (historyCount - 1)) * (compressedRatio * 100));
-      continue;
-    }
-
-    if (historyCount === 1 && index === 0) {
-      positions.push(0);
-      continue;
-    }
-
-    const recentIndex = index - historyCount;
-    const recentCount = visiblePoints - historyCount;
-    const recentDenominator = Math.max(recentCount - 1, 1);
-    positions.push(compressedRatio * 100 + (recentIndex / recentDenominator) * ((1 - compressedRatio) * 100));
-  }
-
-  const markerIndexes = buildXAxisMarkerIndexes(visiblePoints);
+function calculateXAxisLayout(labels: string[], visiblePoints: number) {
+  const visibleLabels = labels.slice(0, visiblePoints);
+  const positions = visibleLabels.map((label) => dateToAxisValue(label));
+  const markerIndexes = buildXAxisMarkerIndexes(visibleLabels.length);
   const markers = markerIndexes.map((index) => ({
     position: positions[index] ?? 0,
-    label: labels[index] ?? "",
+    label: visibleLabels[index] ?? "",
   }));
 
   return {positions, markers};
@@ -310,7 +289,11 @@ function formatXAxisTick(value: number): string {
     }
   }
 
-  return closestDistance <= 6 ? closest.label : "";
+  const minPosition = currentXAxisMarkers[0]?.position ?? 0;
+  const maxPosition = currentXAxisMarkers[currentXAxisMarkers.length - 1]?.position ?? minPosition;
+  const threshold = Math.max((maxPosition - minPosition) / 20, 86400000 * 2);
+
+  return closestDistance <= threshold ? closest.label : "";
 }
 
 const lineLabelPlugin = {
@@ -404,8 +387,11 @@ function animateChart(preview: ChartPreviewPayload, totalPoints: number) {
 
     lastVisiblePoints = visiblePoints;
     const labels = preview.series[0]?.timeline.map((point) => point.date) ?? [];
-    const xAxisLayout = calculateXAxisLayout(labels, totalPoints, visiblePoints);
+    const xAxisLayout = calculateXAxisLayout(labels, visiblePoints);
     currentXAxisMarkers = xAxisLayout.markers;
+    const fullXAxisValues = labels.map((label) => dateToAxisValue(label));
+    const xMin = fullXAxisValues[0] ?? 0;
+    const xMax = fullXAxisValues[fullXAxisValues.length - 1] ?? xMin + 1;
 
     preview.series.forEach((series, index) => {
       const dataset = chart?.data.datasets[index];
@@ -414,7 +400,7 @@ function animateChart(preview: ChartPreviewPayload, totalPoints: number) {
       }
 
       const nextData = series.timeline.map((point, pointIndex) => ({
-        x: pointIndex < visiblePoints ? (xAxisLayout.positions[pointIndex] ?? 0) : 100,
+        x: dateToAxisValue(point.date),
         y: pointIndex < visiblePoints ? point.marketValue : Number.NaN,
       }));
       dataset.data = nextData;
@@ -430,8 +416,8 @@ function animateChart(preview: ChartPreviewPayload, totalPoints: number) {
     if (!activeChart.options.scales.y) {
       activeChart.options.scales.y = {};
     }
-    activeChart.options.scales.x.min = 0;
-    activeChart.options.scales.x.max = 100;
+    activeChart.options.scales.x.min = xMin;
+    activeChart.options.scales.x.max = xMax;
     activeChart.options.scales.y.min = domain.min;
     activeChart.options.scales.y.max = domain.max;
 
@@ -485,7 +471,7 @@ function renderChart(preview: ChartPreviewPayload) {
   const labels = preview.series[0]?.timeline.map((point) => point.date) ?? [];
   const totalPoints = Math.max(...preview.series.map((series) => series.timeline.length), 1);
   const initialDomain = calculateVisibleYDomain(preview, 1);
-  currentXAxisMarkers = calculateXAxisLayout(labels, totalPoints, 1).markers;
+  currentXAxisMarkers = calculateXAxisLayout(labels, 1).markers;
   currentLineLabels = [];
 
   if (chart) {
@@ -549,13 +535,10 @@ function renderChart(preview: ChartPreviewPayload) {
       scales: {
         x: {
           type: "linear",
-          min: 0,
-          max: 100,
           ticks: {
             color: "#99a8bf",
             maxTicksLimit: 5,
             maxRotation: 0,
-            stepSize: 25,
             callback: (value) => formatXAxisTick(Number(value)),
           },
           grid: {
@@ -666,6 +649,7 @@ form?.addEventListener("submit", async (event) => {
   const startDate = (document.querySelector<HTMLInputElement>("#start-date")?.value ?? "").trim();
   const endDate = (document.querySelector<HTMLInputElement>("#end-date")?.value ?? "").trim();
   const capital = Number((document.querySelector<HTMLInputElement>("#capital")?.value ?? "0").trim());
+  const savingsAnnualRatePct = Number((document.querySelector<HTMLInputElement>("#savings-rate")?.value ?? "0").trim());
   const baseCurrency = (document.querySelector<HTMLSelectElement>("#base-currency")?.value ?? "KRW").trim();
   const frequency = (document.querySelector<HTMLSelectElement>("#frequency")?.value ?? "day").trim();
   const strategyIds = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="strategy"]:checked')).map(
@@ -680,6 +664,11 @@ form?.addEventListener("submit", async (event) => {
 
   if (hasMergedSymbols(symbol)) {
     window.alert("Multiple symbols must be separated by commas. Example: NASDAQ: QQQ, NASDAQ: AAPL");
+    return;
+  }
+
+  if (!Number.isFinite(savingsAnnualRatePct) || savingsAnnualRatePct < 0) {
+    window.alert("Savings annual rate must be 0 or higher.");
     return;
   }
 
@@ -712,6 +701,7 @@ form?.addEventListener("submit", async (event) => {
         startDate,
         endDate,
         capital,
+        savingsAnnualRatePct,
         baseCurrency,
         frequency,
         strategyIds,

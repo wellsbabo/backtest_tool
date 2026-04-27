@@ -15,6 +15,7 @@ The current product direction is:
 - required market prefixes such as `KRX: 005930` and `NASDAQ: AAPL`
 - strategy comparison on the same symbol
 - cross-market comparison with normalized price and FX-converted price
+- savings interest benchmark using an annual rate input
 - built-in presets:
   - `Buy and Hold`
   - `5D Breakout`
@@ -98,10 +99,11 @@ http://localhost:3000
 2. Separate multiple symbols with commas.
 3. Choose the date range.
 4. Enter the initial capital.
-5. Select the base currency if you want FX-converted price lines.
-6. Select one or more price options or strategy presets.
-7. Click `Preview Chart`.
-8. Use the speed controls or replay button if needed.
+5. Enter a savings annual rate if you want a bank-style benchmark line.
+6. Select the base currency if you want FX-converted price lines.
+7. Select one or more price options or strategy presets.
+8. Click `Preview Chart`.
+9. Use the speed controls or replay button if needed.
 
 ## Symbol examples
 
@@ -128,6 +130,9 @@ http://localhost:3000
 - `FX Converted Price with historical FX`
   - converts each date using that date's FX rate
   - best for absolute value comparison from the perspective of a selected base currency
+- `Savings Interest Benchmark`
+  - grows the initial capital over time using the entered annual rate
+  - useful for comparing the backtest result against a simple savings-style baseline
 
 ## Current assumptions
 

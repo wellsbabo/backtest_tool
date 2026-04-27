@@ -49,6 +49,12 @@
           </label>
 
           <label>
+            <span>Savings Annual Rate (%)</span>
+            <input id="savings-rate" type="number" min="0" step="0.01" value="3.50" />
+            <small class="field-help">Used only when the savings comparison option is selected.</small>
+          </label>
+
+          <label>
             <span>Base Currency</span>
             <select id="base-currency">
               <option value="KRW" selected>KRW</option>
@@ -91,6 +97,13 @@
               <span>
                 FX Converted Price with historical FX
                 <small>Converts each date using that date's FX rate. Best for investor-view absolute value.</small>
+              </span>
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="strategy" value="savings-interest" />
+              <span>
+                Savings Interest Benchmark
+                <small>Grows the initial capital using the annual rate above across the selected period.</small>
               </span>
             </label>
             <label class="checkbox">
